@@ -1,17 +1,23 @@
 import * as readline from "readline";
 
+const hankaku = new RegExp(/^[\x20-\x7e]*$/);
+
 export class Canvas{
   canvas=[];
   size={};
-  constructor(dx,dy){
+  initElement="";
+  cursor=0;
+  constructor(dx,dy,element=""){
     this.size={
       x:dx,
       y:dy
     }
+    this.initElement=element;
+    this.cursor=(!hankaku.test(element)+1)*this.initElement.length;
     for(let i=0;i<dx;i++){
       this.canvas.push([]);
       for(let j=0;j<dy;j++){
-        this.canvas[i][j]="　";
+        this.canvas[i][j]=element;
       }
     }
   }
@@ -19,7 +25,7 @@ export class Canvas{
     readline.clearLine(process.stdout);
     for(let i=0;i<this.size.y;i++){
       for(let j=0;j<this.size.x;j++){
-        readline.cursorTo(process.stdout,j*2,i);
+        readline.cursorTo(process.stdout,j*this.cursor,i);
         process.stdout.write(`${this.canvas[i][j]}`);
       }
     }
@@ -69,7 +75,7 @@ export class Canvas{
     }
     return resultArray;
   }
-  line(startX,startY,endX,endY,element="🔲"){
+  line(startX,startY,endX,endY,element=""){
     if(startX-endX==0){
       for(let y=startY;y<=endY;y++){
         this.setCell(startX,y,element);
@@ -83,7 +89,7 @@ export class Canvas{
       this.setCell(x,y,element);
     }
   }
-  square(startX,startY,endX,endY,element="　"){
+  square(startX,startY,endX,endY,element=""){
     for(let i=startX;i<=endX;i++){
       for(let j=startY;j<=endY;j++)this.setCell(i,j,element);
     }
@@ -97,11 +103,14 @@ export class Canvas{
     this.square(startX,startY,endX,endY);
     this.setRangeCells(targetX,targetY,targetRangeCells);
   }
-  clear(){
+  fillAll(element){
     for(let i=0;i<this.size.y;i++){
       for(let j=0;j<this.size.x;j++){
-        this.setCell(i,j,"　");
+        this.setCell(i,j,element);
       }
     }
+  }
+  clear(){
+    this.fillAll(this.initElement);
   }
 }
