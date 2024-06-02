@@ -1,6 +1,6 @@
-const readline = require("readline");
+import * as readline from "readline";
 
-class Canvas{
+export class Canvas{
   canvas=[];
   size={};
   constructor(dx,dy){
@@ -69,19 +69,33 @@ class Canvas{
     }
     return resultArray;
   }
-  line(x1,y1,x2,y2,element="🔲"){
-    if(x1-x2==0){
-      for(let y=y1;y<=y2;y++){
-        this.setCell(x1,y,element);
+  line(startX,startY,endX,endY,element="🔲"){
+    if(startX-endX==0){
+      for(let y=startY;y<=endY;y++){
+        this.setCell(startX,y,element);
       }
     }
-    const a = (y2-y1)/(x2-x1);
-    const b = y1-a*x1;
+    const a = (endY-startY)/(endX-startX);
+    const b = startY-a*startX;
     let y = 0;
-    for(let x=x1;x<=x2;x++){
+    for(let x=startX;x<=endX;x++){
       y = Math.round(a*x+b);
       this.setCell(x,y,element);
     }
+  }
+  square(startX,startY,endX,endY,element="　"){
+    for(let i=startX;i<=endX;i++){
+      for(let j=startY;j<=endY;j++)this.setCell(i,j,element);
+    }
+  }
+  clone(startX,startY,endX,endY,targetX,targetY){
+    const targetRangeCells=this.getRangeCells(startX,startY,endX,endY);
+    this.setRangeCells(targetX,targetY,targetRangeCells);
+  }
+  move(startX,startY,endX,endY,targetX,targetY){
+    const targetRangeCells=this.getRangeCells(startX,startY,endX,endY);
+    this.square(startX,startY,endX,endY);
+    this.setRangeCells(targetX,targetY,targetRangeCells);
   }
   clear(){
     for(let i=0;i<this.size.y;i++){
@@ -90,30 +104,4 @@ class Canvas{
       }
     }
   }
-  square(x1,y1,x2,y2,element="　"){
-    for(let i=x1;i<=x2;i++){
-      for(let j=y1;j<=y2;j++)this.setCell(i,j,element);
-    }
-  }
-  clone(x1,y1,x2,y2,x3,y3){
-    const targetRangeCells=this.getRangeCells(x1,y1,x2,y2);
-    this.setRangeCells(x3,y3,targetRangeCells);
-  }
-  move(x1,y1,x2,y2,x3,y3){
-    const targetRangeCells=this.getRangeCells(x1,y1,x2,y2);
-    this.square(x1,y1,x2,y2);
-    this.setRangeCells(x3,y3,targetRangeCells);
-  }
 }
-
-
-const screen = new Canvas(16,16);
-let aaa = 0;
-
-setInterval(()=>{
-  screen.clear();
-  screen.cellSet(aaa%16,aaa%16,"🔲");
-  screen.render()
-  aaa++;
-},1000)
-
