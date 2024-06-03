@@ -1,19 +1,23 @@
 import * as readline from "readline";
+import { TerminalObject } from "./TerminalObject";
 
-const hankaku = new RegExp(/^[\x20-\x7e]*$/);
+const HalfSize = new RegExp(/^[\x20-\x7e]*$/);
 
 export class Canvas{
+  /** @type {string[][]} */
   canvas=[];
   size={};
   initElement="";
   cursor=0;
+  /** @type {TerminalObject[]} */
+  terminalObjects=[];
   constructor(dx,dy,element=""){
     this.size={
       x:dx,
       y:dy
     }
     this.initElement=element;
-    this.cursor=(!hankaku.test(element)+1)*this.initElement.length;
+    this.cursor=(!HalfSize.test(element)+1)*this.initElement.length;
     for(let i=0;i<dx;i++){
       this.canvas.push([]);
       for(let j=0;j<dy;j++){
@@ -22,11 +26,22 @@ export class Canvas{
     }
   }
   render(){
+    process.stdout.write('\x1B[?25l');  // カーソルを非表示にする
     readline.clearLine(process.stdout);
-    for(let i=0;i<this.size.y;i++){
+    const renderCanvas = this.canvas;            //描画用の配列
+    for(let object of this.terminalObjects){
+      for(let i=0;i<object.shape.length;i++){
+        for(let j=0;i<object.shape[i].length;j++){
+          const renderPos = object.position - object.anchor;  //vector2で計算出来るように
+          if(object.shape[i][j].length)renderCanvas[i][j]=object.shape[i][j];//ここもrenderPos.xみたいに変更
+        }
+      }
+    }
+
+    for(let i=0;i<this.size.y;i++){     //this.canvasの中身の描画
       for(let j=0;j<this.size.x;j++){
         readline.cursorTo(process.stdout,j*this.cursor,i);
-        process.stdout.write(`${this.canvas[i][j]}`);
+        process.stdout.write(`${renderCanvas[i][j]}`);
       }
     }
   }
@@ -66,7 +81,7 @@ export class Canvas{
     let px=0,py=0;
     let resultArray=[];
     for(let i=startX;i<=endX;i++){
-      resultArray[i]=[];
+      resultArray[px]=[];
       for(let j=startY;j<=endY;j++){
         resultArray[px][py]=this.getCell(i,j);
         py++;
@@ -89,18 +104,14 @@ export class Canvas{
       this.setCell(x,y,element);
     }
   }
-  square(startX,startY,endX,endY,element=""){
+  square(startX,startY,endX,endY,element=this.initElement){
     for(let i=startX;i<=endX;i++){
       for(let j=startY;j<=endY;j++)this.setCell(i,j,element);
     }
   }
-  clone(startX,startY,endX,endY,targetX,targetY){
-    const targetRangeCells=this.getRangeCells(startX,startY,endX,endY);
-    this.setRangeCells(targetX,targetY,targetRangeCells);
-  }
-  move(startX,startY,endX,endY,targetX,targetY){
-    const targetRangeCells=this.getRangeCells(startX,startY,endX,endY);
-    this.square(startX,startY,endX,endY);
+  clone(startX,startY,endX,endY,targetX,targetY,mode=FillMode.normal){
+    const targetRangeCells = this.getRangeCells(startX,startY,endX,endY);
+    if(mode==1)this.square(startX,startY,endX,endY);
     this.setRangeCells(targetX,targetY,targetRangeCells);
   }
   fillAll(element){
@@ -113,4 +124,9 @@ export class Canvas{
   clear(){
     this.fillAll(this.initElement);
   }
+}
+
+export class FillMode{
+  static normal = 0;
+  static move = 1;
 }

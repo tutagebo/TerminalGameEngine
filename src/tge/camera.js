@@ -1,12 +1,6 @@
 import { Canvas } from "./canvas.js";
 
-class Camera{
-    size={};
-    position={
-        x: 0,
-        y: 0
-    };
-    canvas;
+export class Camera extends TerminalObject{
     /**
      * 
      * @param {number} dx 
