@@ -1,5 +1,7 @@
 import * as readline from "readline";
-import { TerminalObject } from "./TerminalObject";
+import { TerminalObject } from "./TerminalObject.js";
+import { Vector2 } from "./vector2.js";
+import { array2DCopy } from "./utils.js";
 
 const HalfSize = new RegExp(/^[\x20-\x7e]*$/);
 
@@ -11,6 +13,9 @@ export class Canvas{
   cursor=0;
   /** @type {TerminalObject[]} */
   terminalObjects=[];
+
+  static None = 0;
+
   constructor(dx,dy,element=""){
     this.size={
       x:dx,
@@ -28,12 +33,15 @@ export class Canvas{
   render(){
     process.stdout.write('\x1B[?25l');  // カーソルを非表示にする
     readline.clearLine(process.stdout);
-    const renderCanvas = this.canvas;            //描画用の配列
+    const renderCanvas = array2DCopy(this.canvas);    //描画用の配列
     for(let object of this.terminalObjects){
       for(let i=0;i<object.shape.length;i++){
-        for(let j=0;i<object.shape[i].length;j++){
-          const renderPos = object.position - object.anchor;  //vector2で計算出来るように
-          if(object.shape[i][j].length)renderCanvas[i][j]=object.shape[i][j];//ここもrenderPos.xみたいに変更
+        for(let j=0;j<object.shape[i].length;j++){
+          if(object.shape[i][j]=="")continue;
+          const renderPos = Vector2.Sub(object.position, object.anchor);
+          const torusX = (i+renderPos.x)%this.size.x;
+          const torusY = (j+renderPos.y)%this.size.y;
+          renderCanvas[torusX][torusY]=object.shape[i][j];
         }
       }
     }
@@ -41,7 +49,7 @@ export class Canvas{
     for(let i=0;i<this.size.y;i++){     //this.canvasの中身の描画
       for(let j=0;j<this.size.x;j++){
         readline.cursorTo(process.stdout,j*this.cursor,i);
-        process.stdout.write(`${renderCanvas[i][j]}`);
+        process.stdout.write(`${renderCanvas[j][i]}`);
       }
     }
   }
@@ -123,6 +131,14 @@ export class Canvas{
   }
   clear(){
     this.fillAll(this.initElement);
+  }
+  /**
+   * 
+   * @param {TerminalObject} terminalObj 
+   */
+  joinTerminalObject(terminalObj){
+    this.terminalObjects.push(terminalObj);
+    return terminalObj;
   }
 }
 
